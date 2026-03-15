@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from app.models import PerfilModel, TokenModel
+    from app.models import PerfilModel, TokenModel, ResetPasswordTokenModel
 
 class UsuarioModel(SQLModel, table=True):
     __tablename__ : str = "usuario"
@@ -21,3 +21,4 @@ class UsuarioModel(SQLModel, table=True):
     #Relationships
     perfil: "PerfilModel" = Relationship(back_populates="usuarios")
     tokens: List["TokenModel"] = Relationship(back_populates="usuario")
+    password_reset_tokens: List["ResetPasswordTokenModel"] = Relationship(back_populates="usuario")
