@@ -29,7 +29,7 @@ async def get_current_user(token: str = Depends(cookie_scheme)) -> TokenAuthenti
     )
 
     try:
-        logger.warning(f"Received token for validation: {token}")
+        #logger.warning(f"Received token for validation: {token}")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user = payload.get("user")
         if user is None:

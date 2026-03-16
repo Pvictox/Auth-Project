@@ -21,4 +21,4 @@ class ResetPasswordTokenModel(SQLModel, table=True):
 
     #Relationships
 
-    usuario: "UsuarioModel" = Relationship(back_populates="tokens")
+    usuario: "UsuarioModel" = Relationship(back_populates="password_reset_tokens")

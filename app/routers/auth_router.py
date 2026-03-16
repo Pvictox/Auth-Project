@@ -60,7 +60,12 @@ async def refresh_token(session: SessionDependency,
     except HTTPException as http_exc:
         logger.error(f"HTTPException during token refresh: {http_exc.detail}")
         raise http_exc
-    
+
+@router.post("/forgot-password", tags=["authentication"], status_code=status.HTTP_200_OK)
+async def forgot_password(email: Annotated[str, Form()], session: SessionDependency) -> dict:
+    auth_service = AuthService(session=session)
+    return await auth_service.forgot_password(email=email)
+
 @router.post("/logout", tags=["authentication"], status_code=status.HTTP_200_OK, response_model=LogoutResponse)
 async def logout(response:Response, 
                 session: SessionDependency,
