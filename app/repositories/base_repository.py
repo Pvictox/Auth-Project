@@ -59,6 +59,7 @@ class BaseRepository(Generic[ModelType, DTOType]):
         count = self.session.exec(statement).one()
         return count
 
+    #TODO: Change this function to ignore relationships fields.
     def update(self, instance_DTO: DTOType) -> DTOType | None:
         try:
             pk_name, pk_value = self._get_pk_value(instance_DTO)

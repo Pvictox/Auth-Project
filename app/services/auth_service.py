@@ -82,9 +82,14 @@ class AuthService:
                 user= UsuarioPublicDTO(**usuario_token.model_dump()),
             )
 
+        except ValueError as ve: #Case of inactive user
+            logger.warning(f"Login attempt failed: {ve}")
+            raise HTTPException(status_code=403, detail=str(ve))
+
         except Exception as e:
             logger.error(f"[AUTH SERVICE - ERROR] Failed to handle login: {e}")
             return None
+        
 
     def refresh_acess_token(self, refresh_token: str, response: Response) -> SucessfulLoginResponse | None:
         try:

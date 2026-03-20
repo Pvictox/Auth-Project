@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import Optional
 from app.dto.usuario_DTO import UsuarioPublicDTO
 
 class UsuarioBase(BaseModel):
@@ -13,9 +13,6 @@ class UsuarioBase(BaseModel):
 class UsuarioBaseResponse(UsuarioBase):
     pass
 
-class UsuarioCreateResponse(BaseModel):
-    sucess: bool
-    user: UsuarioPublicDTO 
 class UsuarioFormData(BaseModel):
     '''
     Schema for receiving usuario data from form submissions, including password field.
@@ -25,7 +22,7 @@ class UsuarioFormData(BaseModel):
     email: str
     perfil: str
     ativo: bool = True
-    password: str
+    password: Optional[str] = None
 
 class UsuarioResetSenhaFormData(BaseModel):
     '''

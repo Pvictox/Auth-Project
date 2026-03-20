@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status, Form, Query, HTTPException
 from app.core.roles_checker import RolesChecker
 from app.dto.usuario_DTO import UsuarioPublicDTO
 from app.schemas.response_schema import ResponseMessage
-from app.schemas.usuario_schema import UsuarioCreateResponse
 from app.dto import TokenAuthenticatedDataDTO
 from app.schemas.usuario_schema import *
 from app.database import Database, get_session
@@ -49,29 +48,32 @@ async def get_total_usuarios(session: SessionDependency, current_user = Annotate
     total = usuario_service.get_total_usuarios()
     return {'success': True, 'total': total}
 
-# @router.get("/{usuario_id}", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=UsuarioPublic)
-# async def read_usuario(usuario_id: int, session: SessionDependency) -> UsuarioPublic:
-#     usuario_repository = UsuarioRepository(session=session)
-#     usuario = usuario_repository.get_usuario_by_kwargs(usuario_id=usuario_id)
-#     if not usuario:
-#         logger.warning(f"Usuario with id {usuario_id} not found in the database.")
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Usuario with id {usuario_id} not found")
-#     return usuario
 
-
-@router.post("/", tags=["usuarios"], status_code=status.HTTP_201_CREATED, response_model=UsuarioCreateResponse, dependencies=[Depends(_admin_required)]) #TODO: Ajustar retorno
+@router.post("/", tags=["usuarios"], status_code=status.HTTP_201_CREATED, response_model=ResponseMessage, dependencies=[Depends(_admin_required)]) #TODO: Ajustar retorno
 @redis_invalidate("usuarios:*") # Invalida cache de listagem de usuarios
 async def create_usuario(
     data: Annotated[UsuarioFormData, Form()],
     session: SessionDependency
-) -> UsuarioCreateResponse | None:
+) -> ResponseMessage | None:
     
     usuario_service = UsuarioService(session=session)
     print("[USUARIO ROUTER - INFO] Creating new usuario...")
     new_usuario = usuario_service.create_usuario(data=data)
     if not new_usuario:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create usuario.")
-    return UsuarioCreateResponse(sucess=True, user=new_usuario)
+    return ResponseMessage(success=True, message="Usuario created successfully.")
+
+@router.put("/update", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=ResponseMessage)
+async def update_usuario(
+    data: Annotated[UsuarioFormData, Form()],
+    session: SessionDependency,
+    current_user = Depends(get_current_user)    
+)-> ResponseMessage:
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    usuario_service = UsuarioService(session=session)
+    return usuario_service.update_usuario(data=data)
 
 @router.post("/reset-password", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=ResponseMessage)
 async def reset_password(

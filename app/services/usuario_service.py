@@ -26,7 +26,8 @@ class UsuarioService:
             usuario = self.usuario_repository.get_by_kwargs(uid=data.uid, email=data.email)
             if usuario:
                 raise ValueError("UID or Email already exists") #TODO: Custom Exception
-            
+            if data.password is None:
+                raise ValueError("Password is required") #TODO: Custom Exception
             password = data.password
             hashed_pass = get_password_hash(password)
             data.password = hashed_pass
@@ -96,6 +97,38 @@ class UsuarioService:
         except Exception as e:
             logger.error(f"Failed to retrieve usuarios: {e}")
             return empty_reponse
+
+    def update_usuario(self, data: UsuarioFormData) -> ResponseMessage:
+        try:
+            usuario = self.usuario_repository.get_by_kwargs(uid=data.uid)
+            if not usuario:
+                raise ValueError("Usuario not found") #TODO: Custom Exception
+            
+            perfil = self.perfil_repository.get_by_kwargs(valor=data.perfil) if data.perfil else None
+            if data.perfil and not perfil:
+                raise ValueError("Perfil not found") #TODO: Custom Exception
+            new_usuario_dto = UsuarioModelDTO(
+                **usuario.model_dump(exclude={"perfil_id", "tokens", "nome", "email", "is_active", "perfil_id"}),
+                nome=data.nome,
+                email=data.email,
+                is_active=data.ativo,
+                perfil_id=perfil.id_perfil if perfil else usuario.perfil_id,
+
+            )
+            logger.warning(f"Fetched usuario for update: {new_usuario_dto}")
+            if data.password and data.password != "":
+                hashed_pass = get_password_hash(data.password)
+                new_usuario_dto.hashed_pass = hashed_pass
+            else:
+                new_usuario_dto.hashed_pass = usuario.hashed_pass
+            
+            self.usuario_repository.update_usuario(new_usuario_dto)
+            return ResponseMessage(success=True, message="Usuario updated successfully.")
+        except Exception as e:
+            logger.error(f"Failed to update usuario: {e}")
+            return ResponseMessage(success=False, message="Failed to update usuario.")
+
+
 
     def reset_password_usuario(self, data: UsuarioResetSenhaFormData) -> ResponseMessage:
         #Verify if the token is valid 

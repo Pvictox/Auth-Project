@@ -35,6 +35,8 @@ async def login(login_data: Annotated[LoginRequest, Form()], session: SessionDep
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid UID or password")
         
         return token_response
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Login failed.")
     
