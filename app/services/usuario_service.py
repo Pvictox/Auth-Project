@@ -1,11 +1,16 @@
-from app.repositories import UsuarioRepository, PerfilRepository
-from app.schemas.usuario_schema import UsuarioFormData, UsuarioBase
+import hashlib
+import token
+
+from app.repositories import UsuarioRepository, PerfilRepository, ResetPasswordTokenRepository
+from app.schemas.usuario_schema import UsuarioFormData, UsuarioResetSenhaFormData
+from app.schemas.response_schema import ResponseMessage
 from app.dto.usuario_DTO import UsuarioPublicDTO, UsuarioModelDTO
 from app.schemas.paginated_schema import PaginatedResponse
-
+from datetime import datetime, timezone
 from typing import List, Optional
 from app.core.security import get_password_hash
 from app.log_config.logging_config import get_logger
+import secrets
 
 logger = get_logger(__name__)
 class UsuarioService:
@@ -13,6 +18,7 @@ class UsuarioService:
     def __init__(self, session ):
         self.usuario_repository = UsuarioRepository(session=session)
         self.perfil_repository = PerfilRepository(session=session)
+        self.reset_pass_repository = ResetPasswordTokenRepository(session=session)
 
     
     def create_usuario(self, data:UsuarioFormData) -> UsuarioPublicDTO | None:
@@ -91,3 +97,33 @@ class UsuarioService:
             logger.error(f"Failed to retrieve usuarios: {e}")
             return empty_reponse
 
+    def reset_password_usuario(self, data: UsuarioResetSenhaFormData) -> ResponseMessage:
+        #Verify if the token is valid 
+        hashed_token = hashlib.sha256(data.token.encode()).hexdigest()
+        token = self.reset_pass_repository.get_by_kwargs(token=hashed_token)
+        logger.warning(f"fetched token = {token} for provided reset token.")
+        if token and not token.is_revoked:
+            now_ref = datetime.now(token.exp.tzinfo) if token.exp.tzinfo else datetime.now()
+            logger.warning(f"Token expiration time: {token.exp}, Current time ref: {now_ref}")
+            if token.exp > now_ref:
+                usuario = self.usuario_repository.get_by_kwargs(id_usuario=token.usuario_id)
+                if not usuario:
+                    logger.error(f"User associated with token not found: {token.usuario_id}")
+                    return ResponseMessage(success=False, message="Invalid token.")
+            
+                hashed_pass = get_password_hash(data.new_password)
+                new_usuario_dto = UsuarioModelDTO(
+                    **usuario.model_dump(exclude={"hashed_pass"}),
+                    hashed_pass=hashed_pass)
+            
+                self.usuario_repository.update_usuario(new_usuario_dto)
+                #Revoke the token after use
+                self.reset_pass_repository.revoke_token(id_token=token.id_token)
+
+                return ResponseMessage(success=True, message="Password reset successful.")
+            else:
+                logger.warning(f"Token expired: {data.token}")
+                return ResponseMessage(success=False, message="Token expired.")
+        else:
+            logger.warning(f"Invalid or expired token used for password reset: {data.token}")
+            return ResponseMessage(success=False, message="Invalid or expired token.")

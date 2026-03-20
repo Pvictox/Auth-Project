@@ -26,4 +26,11 @@ class UsuarioFormData(BaseModel):
     perfil: str
     ativo: bool = True
     password: str
+
+class UsuarioResetSenhaFormData(BaseModel):
+    '''
+    Schema for receiving password reset data from form submissions.
+    '''
+    token: str # The reset token sent to the user's email
+    new_password: str
     

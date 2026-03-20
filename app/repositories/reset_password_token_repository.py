@@ -25,3 +25,18 @@ class ResetPasswordTokenRepository(BaseRepository[ResetPasswordTokenModel, Reset
             self.session.rollback()
             logger.error(f"[RESET PASSWORD TOKEN REPOSITORY - ERROR] Failed to create new reset password token: {e}")
             raise
+    
+    def revoke_token(self, id_token: int) -> bool:
+        try:
+            token = self.session.get(ResetPasswordTokenModel, id_token)
+            if not token:
+                logger.warning(f"Token with id {id_token} not found for revocation.")
+                return False
+            token.is_revoked = True
+            self.session.add(token)
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"[RESET PASSWORD TOKEN REPOSITORY - ERROR] Failed to revoke token with id {id_token}: {e}")
+            return False

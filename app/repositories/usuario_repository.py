@@ -37,6 +37,25 @@ class UsuarioRepository(BaseRepository[UsuarioModel, UsuarioModelDTO]):
             logger.error(f"[USUARIO REPOSITORY - ERROR] Failed to create new usuario: {e}")
             return None
 
+    def update_usuario(self, data: UsuarioModelDTO) -> UsuarioModelDTO | None:
+        try:
+            db_usuario = self.session.get(UsuarioModel, data.id_usuario)
+            if not db_usuario:
+                logger.warning(f"Usuario with id {data.id_usuario} not found in database. Cannot update.")
+                return None
+
+            for field, value in data.model_dump(exclude={"id_usuario", "perfil", "tokens"}).items():
+                setattr(db_usuario, field, value)
+
+            self.session.add(db_usuario)
+            self.session.commit()
+            self.session.refresh(db_usuario)
+            return self.dto.model_validate(db_usuario)
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"[USUARIO REPOSITORY - ERROR] Failed to update usuario with id {data.id_usuario}: {e}")
+            raise
+        
     def get_count_with_filters_ilike(self, **kwargs) -> int:
         nome_filter = kwargs.get('nome')
         perfil_id_filter = kwargs.get('perfil_id')

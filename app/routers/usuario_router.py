@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, Form, Query, HTTPException
 from app.core.roles_checker import RolesChecker
-from app.dto.usuario_DTO import UsuarioModelDTO, UsuarioPublicDTO
+from app.dto.usuario_DTO import UsuarioPublicDTO
+from app.schemas.response_schema import ResponseMessage
 from app.schemas.usuario_schema import UsuarioCreateResponse
 from app.dto import TokenAuthenticatedDataDTO
 from app.schemas.usuario_schema import *
@@ -71,3 +72,12 @@ async def create_usuario(
     if not new_usuario:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create usuario.")
     return UsuarioCreateResponse(sucess=True, user=new_usuario)
+
+@router.post("/reset-password", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=ResponseMessage)
+async def reset_password(
+    data: Annotated[UsuarioResetSenhaFormData, Form()],
+    session: SessionDependency
+) -> ResponseMessage:
+    usuario_service = UsuarioService(session=session)
+    result = usuario_service.reset_password_usuario(data=data)
+    return result

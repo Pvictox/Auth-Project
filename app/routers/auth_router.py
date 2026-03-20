@@ -61,6 +61,7 @@ async def refresh_token(session: SessionDependency,
         logger.error(f"HTTPException during token refresh: {http_exc.detail}")
         raise http_exc
 
+#TODO: This is really responsability of this endpoint? Maybe it should be in a separate router or even put it on Usuarios?
 @router.post("/forgot-password", tags=["authentication"], status_code=status.HTTP_200_OK)
 async def forgot_password(email: Annotated[str, Form()], session: SessionDependency) -> dict:
     auth_service = AuthService(session=session)
