@@ -75,6 +75,18 @@ async def update_usuario(
     usuario_service = UsuarioService(session=session)
     return usuario_service.update_usuario(data=data)
 
+@router.delete("/delete", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=ResponseMessage)
+async def delete_usuario (
+    data: Annotated[UsuarioDeleteFormData, Form()],
+    session: SessionDependency,
+    current_user = Depends(get_current_user)
+) -> ResponseMessage:
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    usuario_service = UsuarioService(session=session)
+    return usuario_service.delete_usuario(uid=data.uid)
+
 @router.post("/reset-password", tags=["usuarios"], status_code=status.HTTP_200_OK, response_model=ResponseMessage)
 async def reset_password(
     data: Annotated[UsuarioResetSenhaFormData, Form()],

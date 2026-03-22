@@ -17,7 +17,7 @@ SessionDependency = Annotated[ Session, Depends(get_session) ]
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=PaginatedResponse[PerfilPublic])
-@redis_cache(ttl=180, key_prefix=f"perfis:{{page}}:{{limit}}")
+#@redis_cache(ttl=180, key_prefix=f"perfis:{{page}}:{{limit}}")
 async def read_perfis(session: SessionDependency, current_user = Depends(get_current_user),
                       page: int = Query(default=1, ge=1),
                         limit: int = Query(default=10, ge=1)) -> PaginatedResponse[PerfilPublic]:

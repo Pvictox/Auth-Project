@@ -128,7 +128,17 @@ class UsuarioService:
             logger.error(f"Failed to update usuario: {e}")
             return ResponseMessage(success=False, message="Failed to update usuario.")
 
-
+    def delete_usuario(self, uid:str) -> ResponseMessage:
+        try:
+            usuario = self.usuario_repository.get_by_kwargs(uid=uid)
+            if not usuario:
+                raise ValueError("Usuario not found") #TODO: Custom Exception
+            logger.warning(f"Fetched usuario for deletion: {usuario}")
+            self.usuario_repository.delete(usuario)
+            return ResponseMessage(success=True, message="Usuario deleted successfully.")
+        except Exception as e:
+            logger.error(f"Failed to delete usuario: {e}")
+            return ResponseMessage(success=False, message="Failed to delete usuario.")
 
     def reset_password_usuario(self, data: UsuarioResetSenhaFormData) -> ResponseMessage:
         #Verify if the token is valid 

@@ -10,6 +10,7 @@ class UsuarioBase(BaseModel):
     email: str
     perfil_id: int
 
+
 class UsuarioBaseResponse(UsuarioBase):
     pass
 
@@ -23,6 +24,16 @@ class UsuarioFormData(BaseModel):
     perfil: str
     ativo: bool = True
     password: Optional[str] = None
+
+class UsuarioDeleteFormData(BaseModel):
+    '''
+    Schema for receiving usuario deletion data from form submissions.
+    '''
+    uid: str
+    email: str
+    perfil: str
+    is_active: bool
+    nome: str
 
 class UsuarioResetSenhaFormData(BaseModel):
     '''

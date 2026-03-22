@@ -25,6 +25,9 @@ class UsuarioRepository(BaseRepository[UsuarioModel, UsuarioModelDTO]):
             if not perfil:
                 logger.error(f"[USUARIO REPOSITORY - ERROR] Perfil '{perfil_nome}' not found. Cannot create usuario.")
                 return None
+            if data.password is None: #This case will never trigger at creaton, but it's a safeguard for future updates where password might be optional
+                logger.error(f"[USUARIO REPOSITORY - ERROR] Password is required to create usuario.")
+                return None
             new_usuario = UsuarioModel(nome=data.nome, perfil_id=perfil.id_perfil, uid=data.uid, email=data.email, hashed_pass=data.password, is_active=data.ativo)
             self.session.add(new_usuario)
             self.session.commit()
