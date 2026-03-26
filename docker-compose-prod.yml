@@ -30,7 +30,9 @@ services:
       retries: 5
     command: redis-server --appendonly yes
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: auth_backend
     env_file:
       - .env.prod
