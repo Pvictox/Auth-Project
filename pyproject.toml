@@ -1,0 +1,126 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+# Diretórios a serem completamente ignorados pelo Ruff
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".git",
+    "alembic/versions",   # Migrações são geradas automaticamente
+    "alembic/env.py",     # Arquivo gerado pelo Alembic
+    "logs",
+]
+
+
+# ──────────────────────────────────────────────
+# LINT
+# ──────────────────────────────────────────────
+[tool.ruff.lint]
+
+select = [
+    "E",      # pycodestyle: erros de estilo (ex: espaçamento, indentação)
+    "W",      # pycodestyle: avisos de estilo
+    "F",      # Pyflakes: imports não utilizados, variáveis indefinidas, etc.
+    "I",      # isort: ordenação e agrupamento de imports
+    "N",      # pep8-naming: convenções de nomenclatura (classes, funções, variáveis)
+    "UP",     # pyupgrade: modernização da sintaxe Python (ex: usar | em vez de Union[])
+    "B",      # flake8-bugbear: padrões que causam bugs ou má prática
+    "C4",     # flake8-comprehensions: simplificação de list/dict/set comprehensions
+    "SIM",    # flake8-simplify: simplificação de estruturas condicionais e lógicas
+    "TCH",    # flake8-type-checking: move imports usados só em type hints para TYPE_CHECKING
+    "RUF",    # Ruff-specific: regras próprias do Ruff
+    "ASYNC",  # flake8-async: boas práticas em código assíncrono
+    "G",      # flake8-logging-format: uso correto do módulo logging
+    "LOG",    # flake8-logging: anti-padrões no uso do logging
+    "PIE",    # flake8-pie: melhorias de código desnecessariamente verboso
+    "PT",     # flake8-pytest-style: boas práticas para testes com pytest
+    "TID",    # flake8-tidy-imports: controle de imports relativos e absolutos
+]
+
+ignore = [
+    # ── FastAPI ──────────────────────────────
+    "B008",   # CRÍTICO: permite Depends(), Query(), Path() como default de argumento
+              # O FastAPI depende disso. Sem esse ignore, todos os seus routers quebrariam.
+
+    # ── SQLAlchemy / Pydantic ─────────────────
+    "RUF012", # Permite atributos de classe mutáveis sem ClassVar (padrão do SQLAlchemy)
+    "N805",   # Permite que o primeiro argumento de métodos não se chame 'self'
+              # (necessário para validators do Pydantic v1 que usam 'cls')
+
+    # ── Type Hints ───────────────────────────
+    "TCH001", # Não força mover imports de primeiro partido para TYPE_CHECKING
+              # (pode quebrar imports circulares em projetos com Pydantic/SQLAlchemy)
+    "TCH002", # Idem para imports de terceiros
+    "TCH003", # Idem para imports da stdlib
+
+    # ── Geral ────────────────────────────────
+    "E501",   # Linha longa: controlado pelo line-length acima, não precisa de erro separado
+    "SIM108", # Não força ternário onde if/else é mais legível
+    "W291",
+    "I001"
+]
+
+# Regras que o Ruff pode corrigir automaticamente com --fix
+fixable = ["ALL"]
+unfixable = []
+
+
+# ──────────────────────────────────────────────
+# REGRAS POR ARQUIVO / CONTEXTO
+# ──────────────────────────────────────────────
+[tool.ruff.lint.per-file-ignores]
+
+# Routers: Depends(), Query(), Body() são chamadas de função em defaults — já coberto pelo B008 global
+# mas deixamos explícito para clareza
+"app/routers/*.py" = [
+    "B008",   # Redundante com o global, mas documenta a intenção
+]
+
+# Seeds e scripts utilitários: menos rigorosos, podem ter prints, etc.
+"app/seeds.py" = [
+    "T201",   # Permite print() em scripts de seed
+]
+
+"scripts/*.py" = [
+    "T201",   # Permite print() em scripts de inicialização
+]
+
+# Testes: regras mais relaxadas
+"tests/**/*.py" = [
+    "S101",   # Permite uso de assert (padrão do pytest)
+    "ANN",    # Não exige type annotations em testes
+    "SLF001", # Permite acesso a atributos privados em testes (ex: service._method())
+]
+
+
+# ──────────────────────────────────────────────
+# ISORT — Ordenação de imports (substitui o isort)
+# ──────────────────────────────────────────────
+[tool.ruff.lint.isort]
+# Define o nome do seu pacote principal para separar imports internos dos externos
+known-first-party = ["app"]
+
+# Seções de imports na ordem correta:
+# 1. stdlib  2. third-party  3. first-party  4. local
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+# Cada seção separada por uma linha em branco
+force-sort-within-sections = true
+
+
+# ──────────────────────────────────────────────
+# FORMAT — Substitui o Black
+# ──────────────────────────────────────────────
+[tool.ruff.format]
+quote-style = "double"           # Aspas duplas (padrão Black)
+indent-style = "space"           # Indentação com espaços
+skip-magic-trailing-comma = false # Respeita vírgulas finais para forçar múltiplas linhas
+line-ending = "auto"             # Detecta automaticamente LF ou CRLF

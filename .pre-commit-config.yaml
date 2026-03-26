@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.10  # Atualize com: ruff version
+    hooks:
+      # 1. Ruff lint — detecta e corrige problemas automaticamente
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+      # 2. Ruff format — formata o código (substitui o Black)
+      - id: ruff-format
