@@ -1,16 +1,18 @@
-from app.core.mail import mail
-from app.core.config import settings
 from fastapi_mail import MessageSchema, MessageType
+
+from app.core.config import settings
+from app.core.mail import mail
+
 
 class MailService:
     def __init__(self):
         pass
 
-    async def send_password_reset_email(self, email:str, token:str):
+    async def send_password_reset_email(self, email: str, token: str):
         reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
         message = MessageSchema(
             subject="Redefinição de senha",
-            recipients=[email], #type: ignore
+            recipients=[email],  # type: ignore
             body=f"""
                 <p>Você solicitou a redefinição de sua senha.</p>
                 <p>Clique no link abaixo para continuar. Ele expira em <strong>5 minutos</strong>.</p>
@@ -21,4 +23,3 @@ class MailService:
         )
 
         await mail.send_message(message)
-        

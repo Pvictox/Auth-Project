@@ -1,6 +1,7 @@
-from sqlmodel import SQLModel
-from pydantic import BaseModel
 from dataclasses import dataclass
+
+from sqlmodel import SQLModel
+
 
 @dataclass
 class PerfilModelDTO(SQLModel):

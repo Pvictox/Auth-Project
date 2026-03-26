@@ -1,7 +1,7 @@
 from pydantic import BaseModel
+
 from app.models.usuario_model import UsuarioModel
 
-from datetime import datetime
 
 class TokenAuth(BaseModel):
     exp: int
@@ -11,16 +11,19 @@ class TokenAuth(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    '''
+    """
     Schema for token who will be returned to the frontend.
-    '''
+    """
+
     token: str
-    #refresh_token: str
+    # refresh_token: str
     exp: int
     type: str = "bearer"
 
+
 class TokenRefreshRequest(BaseModel):
-    '''
+    """
     Token sent by the frontend to refresh the access token.
-    '''
+    """
+
     refresh_token: str

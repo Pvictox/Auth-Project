@@ -1,18 +1,19 @@
-from pydantic import BaseModel
-from typing import List, Generic, TypeVar, Optional
+from typing import Generic, TypeVar
 
-T = TypeVar('T') 
+from pydantic import BaseModel
+
+T = TypeVar("T")
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
-    '''
-        Generic paginated response model for API endpoints that return lists of items with pagination.
-    '''
+    """
+    Generic paginated response model for API endpoints that return lists of items with pagination.
+    """
 
-    items: List[T]
+    items: list[T]
     page: int
     total_items: int
-    total_pages: Optional[int] = None
+    total_pages: int | None = None
     skip: int
     limit: int
 

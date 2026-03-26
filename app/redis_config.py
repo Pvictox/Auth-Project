@@ -1,8 +1,11 @@
 import os
+
 import redis
+
 from app.log_config.logging_config import get_logger
 
 logger = get_logger(__name__)
+
 
 class RedisConfig:
     _instance: redis.Redis | None = None
@@ -10,13 +13,13 @@ class RedisConfig:
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            redis_url = os.getenv("REDIS_URL") 
+            redis_url = os.getenv("REDIS_URL")
             if not redis_url:
                 logger.error("REDIS_URL environment variable is not set.")
                 raise ValueError("REDIS_URL environment variable is not set.")
             cls._instance = redis.from_url(
                 redis_url,
-                decode_responses= True,
+                decode_responses=True,
                 socket_timeout=5,  # Timeout for connection attempts
                 retry_on_timeout=True,  # Enable retry on timeout
             )
@@ -31,7 +34,7 @@ class RedisConfig:
             logger.info("Redis connection successful")
             return True
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection failed: {e}")
+            logger.error("Redis connection failed: %s", e)
             return False
 
     @classmethod

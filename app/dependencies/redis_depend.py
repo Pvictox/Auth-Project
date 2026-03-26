@@ -1,5 +1,5 @@
-from fastapi import Depends
 from redis import Redis
+
 from app.redis_config import RedisConfig
 
 

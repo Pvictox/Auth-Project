@@ -1,7 +1,6 @@
-from sqlmodel import SQLModel
-
 from datetime import datetime
 
+from sqlmodel import SQLModel
 
 
 class ResetPasswordTokenDTO(SQLModel):
@@ -14,6 +13,7 @@ class ResetPasswordTokenDTO(SQLModel):
 
     class Config:
         from_attributes = True
+
 
 class ResetPasswordTokenCreateDTO(SQLModel):
     token: str

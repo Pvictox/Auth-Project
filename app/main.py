@@ -1,35 +1,39 @@
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from app.log_config.logging_config import setup_logging, get_logger
-from app.routers import routers
 from contextlib import asynccontextmanager
-from app.database import Database
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .seeds import check_and_seed
+from fastapi.responses import JSONResponse
+
+from app.database import Database
+from app.log_config.logging_config import get_logger, setup_logging
+from app.routers import routers
+
 from .redis_config import RedisConfig
+from .seeds import check_and_seed
 
 setup_logging()
 logger = get_logger(__name__)
 
+
 def router_includer(app: FastAPI) -> None:
-    '''
+    """
     Include all routers in the FastAPI application.
-    '''
+    """
     for router in routers:
         app.include_router(router.router)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if app.state.database.check_connection():
         check_and_seed()
         logger.info("Starting up application...")
-    
+
     if RedisConfig.check_connection():
         logger.info("Redis connection is healthy.")
-    yield 
+    yield
     RedisConfig.close()
     logger.info("Shutting down application...")
-
 
 
 def create_app() -> FastAPI:
@@ -54,20 +58,34 @@ def create_app() -> FastAPI:
     logger.info("Application created successfully")
     return app
 
+
 app = create_app()
 
 
 @app.middleware("http")
 async def log_requests(request, call_next):
-    logger.info(f"Incoming request: {request.method} {request.url}")
+    logger.info("Incoming request: %s %s", request.method, request.url)
     response = await call_next(request)
-    logger.info(f"Response status: {response.status_code} for {request.method} {request.url}")
+    logger.info(
+        "Response status: %d for %s %s",
+        response.status_code,
+        request.method,
+        request.url,
+    )
     return response
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    logger.error(f"Unhandled exception: {exc} for request {request.method} {request.url}")
+    logger.error(
+        "Unhandled exception: %s for request %s %s",
+        exc,
+        request.method,
+        request.url,
+    )
     return JSONResponse(
         status_code=500,
-        content={"detail": "An unexpected error occurred. Please try again later."},
+        content={
+            "detail": "An unexpected error occurred. Please try again later."
+        },
     )

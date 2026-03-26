@@ -1,13 +1,16 @@
 # app/redis_cache.py
-import json
+from collections.abc import Callable
 import functools
-from typing import Callable, Optional
+import json
+
 from fastapi import Request
-from app.redis_config import RedisConfig
 from pydantic import BaseModel
+
 from app.log_config.logging_config import get_logger
+from app.redis_config import RedisConfig
 
 logger = get_logger(__name__)
+
 
 def _serialize(data) -> str:
     """Converte o resultado para string JSON, suportando Pydantic e listas de Pydantic."""
@@ -17,6 +20,7 @@ def _serialize(data) -> str:
         return json.dumps([i.model_dump() for i in data])
     return json.dumps(data)
 
+
 def redis_cache(ttl: int = 300, key_prefix: str = ""):
     def decorator(func: Callable):
         @functools.wraps(func)
@@ -24,28 +28,33 @@ def redis_cache(ttl: int = 300, key_prefix: str = ""):
             redis = RedisConfig.get_instance()
 
             prefix = key_prefix or func.__name__
-            key_params = ":".join(str(v) for v in kwargs.values() if not isinstance(v, Request))
+            key_params = ":".join(
+                str(v) for v in kwargs.values() if not isinstance(v, Request)
+            )
             cache_key = f"{prefix}:{key_params}" if key_params else prefix
 
             try:
                 cached = redis.get(cache_key)
                 if cached:
-                    logger.info(f"Cache HIT → {cache_key}")
-                    return json.loads(cached) #type: ignore
+                    logger.info("Cache HIT → %s", cache_key)
+                    return json.loads(cached)  # type: ignore
             except Exception as e:
-                logger.warning(f"Erro ao ler cache ({cache_key}): {e}")
+                logger.warning("Erro ao ler cache (%s): %s", cache_key, e)
 
             result = await func(*args, **kwargs)
 
             try:
                 redis.setex(cache_key, ttl, _serialize(result))
-                logger.info(f"Cache SET → {cache_key} | TTL: {ttl}s")
+                logger.info("Cache SET → %s | TTL: %d}s", cache_key, ttl)
             except Exception as e:
-                logger.warning(f"Erro ao salvar cache ({cache_key}): {e}")
+                logger.warning("Erro ao salvar cache (%s): %s", cache_key, e)
 
             return result
+
         return wrapper
+
     return decorator
+
 
 def redis_invalidate(*patterns: str):
     def decorator(func: Callable):
@@ -60,12 +69,23 @@ def redis_invalidate(*patterns: str):
                     keys = list(redis.scan_iter(match=pattern))
                     if keys:
                         redis.delete(*keys)
-                        logger.info(f"Cache INVALIDADO → {len(keys)} chave(s) com padrão '{pattern}'")
+                        logger.info(
+                            "Cache INVALIDADO → %d chave(s) com padrão '%s'",
+                            len(keys),
+                            pattern,
+                        )
                     else:
-                        logger.info(f"Nenhuma chave encontrada para o padrão '{pattern}'")
+                        logger.info(
+                            "Nenhuma chave encontrada para o padrão '%s'",
+                            pattern,
+                        )
                 except Exception as e:
-                    logger.warning(f"Erro ao invalidar cache (padrão: {pattern}): {e}")
+                    logger.warning(
+                        "Erro ao invalidar cache (padrão: %s): %s", pattern, e
+                    )
 
             return result
+
         return wrapper
+
     return decorator
